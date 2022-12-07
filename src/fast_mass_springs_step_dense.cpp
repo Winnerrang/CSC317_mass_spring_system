@@ -21,26 +21,32 @@ void fast_mass_springs_step_dense(
   // Replace with your code 
 
     double w = 1e10;
-    Eigen::MatrixXd cur_p(Ucur), prev_p(Uprev), next_p;
+    Eigen::MatrixXd next_p(Ucur);
+    Eigen::MatrixXd y;
+    Eigen::RowVector3d spring;
+    Eigen::MatrixXd d(A.rows(), Ucur.cols());
+    const Eigen::MatrixXd const_y = M / (delta_t * delta_t) * (2 * Ucur - Uprev) +
+                                    fext +
+                                    w * C.transpose() * C * V;
 
     for (int iter = 0; iter < 50; iter++) {
-        Eigen::MatrixXd d = Eigen::MatrixXd::Zero(A.rows(), Ucur.cols());
+
+        // local step that optimize spring direction
         for (int spring_idx = 0; spring_idx < E.rows(); spring_idx++) {
-            auto spring = Ucur.row(cur_p(spring_idx, 0)) - cur_p.row(E(spring_idx, 1));
+            auto spring = next_p.row(E(spring_idx, 0)) - next_p.row(E(spring_idx, 1));
             d.row(spring_idx) = spring.normalized() * r(spring_idx);
         }
 
-        //std::cout << d << std::endl;
-
-        const Eigen::MatrixXd y = k * A.transpose() * d +
-            1 / (delta_t * delta_t) * M * (2 * cur_p - prev_p) +
-            fext +
-            w * C.transpose() * C * V;
+        // global step that optimize future position
+        y = k * A.transpose() * d + const_y;
         next_p = prefactorization.solve(y);
-        prev_p = cur_p;
-        cur_p = next_p;
     }
-    Unext = next_p;
     
+    // can not put Unext inside the for loop
+    // because it will create some weird behavior
+    // reason unknown
+    Unext = next_p;
+
+
   //////////////////////////////////////////////////////////////////////////////
 }
