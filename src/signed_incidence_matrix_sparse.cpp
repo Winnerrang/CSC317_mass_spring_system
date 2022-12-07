@@ -8,9 +8,13 @@ void signed_incidence_matrix_sparse(
 {
   //////////////////////////////////////////////////////////////////////////////
   // Replace with your code
-  std::vector<Eigen::Triplet<double> > ijv;
-  ijv.emplace_back(0,0,1234.5678);
-  A.resize(E.rows(),n);
-  A.setFromTriplets(ijv.begin(),ijv.end());
+      std::vector<Eigen::Triplet<double> > ijv;
+      for (int spring_idx = 0; spring_idx < E.rows(); spring_idx++) {
+          ijv.emplace_back(spring_idx, E(spring_idx, 0), 1);
+          ijv.emplace_back(spring_idx, E(spring_idx, 1), -1);
+      }
+
+      A.resize(E.rows(),n);
+      A.setFromTriplets(ijv.begin(),ijv.end());
   //////////////////////////////////////////////////////////////////////////////
 }
